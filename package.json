@@ -9,7 +9,8 @@
     "lint": "next lint",
     "seed:admin": "tsx scripts/seed-admin.ts",
     "google:auth": "tsx scripts/google-oauth.ts",
-    "google:check": "tsx scripts/google-drive-check.ts"
+    "google:check": "tsx scripts/google-drive-check.ts",
+    "pwa:icons": "node scripts/generate-pwa-icons.mjs"
   },
   "dependencies": {
     "@tiptap/extension-link": "^2.11.5",

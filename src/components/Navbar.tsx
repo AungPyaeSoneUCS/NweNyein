@@ -13,9 +13,11 @@ import {
   MoreHorizontal,
   History,
   Shield,
+  Download,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { INSTALL_EVENT, useInstallPrompt } from "./pwa/useInstallPrompt";
 
 const desktopLinks = [
   { href: "/", label: "Home" },
@@ -42,6 +44,7 @@ function isActive(pathname: string, href: string) {
 export default function Navbar() {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
+  const { isStandalone } = useInstallPrompt();
 
   useEffect(() => {
     setMoreOpen(false);
@@ -197,6 +200,21 @@ export default function Navbar() {
                       <span className="block text-xs text-slate-500">Manage posts and media</span>
                     </span>
                   </Link>
+                  {!isStandalone && (
+                    <button
+                      onClick={() => {
+                        setMoreOpen(false);
+                        window.dispatchEvent(new Event(INSTALL_EVENT));
+                      }}
+                      className="flex w-full min-h-[52px] items-center gap-3 rounded-2xl border border-amber-900/10 bg-ivory/60 px-4 py-3 text-left text-charcoal hover:bg-amber-50/60"
+                    >
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-saffron/15 text-saffron-dark"><Download size={20} /></span>
+                      <span>
+                        <span className="block font-medium">Install App</span>
+                        <span className="block text-xs text-slate-500">Add NweNyeinHill to your home screen</span>
+                      </span>
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>
