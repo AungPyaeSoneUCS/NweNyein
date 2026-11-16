@@ -31,47 +31,90 @@ export function getAuthMode(): AuthMode {
 let cachedOAuthClient: InstanceType<typeof google.auth.OAuth2> | null = null;
 let cachedJwtClient: InstanceType<typeof google.auth.JWT> | null = null;
 
-function getAuth(scopes: string[]) {
+// When OAuth credentials are present but broken (e.g. invalid_client), we
+// temporarily fall back to the service account instead of failing the page.
+const OAUTH_RETRY_MS = 60_000;
+let oauthFailedAt = 0;
+
+export function hasServiceAccountCredentials() {
+  return !!(process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY);
+}
+
+/** True while OAuth is broken and the service-account fallback is in use. */
+export function isDriveOAuthFallbackActive() {
+  return !!oauthFailedAt && Date.now() - oauthFailedAt < OAUTH_RETRY_MS;
+}
+
+function getOAuthClient() {
+  if (!cachedOAuthClient) {
+    const { clientId, clientSecret, refreshToken } = getOAuthEnv();
+    const oauth2 = new google.auth.OAuth2(clientId, clientSecret);
+    oauth2.setCredentials({ refresh_token: refreshToken });
+    cachedOAuthClient = oauth2;
+  }
+  return cachedOAuthClient;
+}
+
+function getServiceAccountAuth(scopes: string[]) {
+  if (!hasServiceAccountCredentials()) {
+    throw new Error(
+      "Google Drive credentials are not configured. Provide either OAuth (GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, GOOGLE_OAUTH_REFRESH_TOKEN) or Service Account (GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY)."
+    );
+  }
+  if (!cachedJwtClient) {
+    const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL as string;
+    const privateKey = (process.env.GOOGLE_PRIVATE_KEY as string).replace(/\\n/g, "\n");
+    cachedJwtClient = new google.auth.JWT({
+      email: clientEmail,
+      key: privateKey,
+      scopes,
+    });
+  }
+  return cachedJwtClient;
+}
+
+async function getAuth(scopes: string[]) {
   const mode = getAuthMode();
 
   // Option 1: OAuth 2.0 user credentials (recommended for personal Google accounts / My Drive quota)
   if (mode === "oauth") {
-    if (!cachedOAuthClient) {
-      const { clientId, clientSecret, refreshToken } = getOAuthEnv();
-      const oauth2 = new google.auth.OAuth2(clientId, clientSecret);
-      oauth2.setCredentials({ refresh_token: refreshToken });
-      cachedOAuthClient = oauth2;
+    // Skip OAuth for a short while if it recently failed and we have a fallback.
+    if (isDriveOAuthFallbackActive() && hasServiceAccountCredentials()) {
+      return getServiceAccountAuth(scopes);
     }
-    return cachedOAuthClient;
+
+    const oauth2 = getOAuthClient();
+    try {
+      // Forces a refresh only when the cached access token is missing/expired.
+      await oauth2.getAccessToken();
+      oauthFailedAt = 0;
+      return oauth2;
+    } catch (e: any) {
+      const message = e?.response?.data?.error_description || e?.message || "OAuth token refresh failed";
+      if (hasServiceAccountCredentials()) {
+        oauthFailedAt = Date.now();
+        console.warn(
+          `[googleDrive] OAuth unavailable (${message}); falling back to service account for the next ${Math.round(OAUTH_RETRY_MS / 1000)}s.`
+        );
+        return getServiceAccountAuth(scopes);
+      }
+      console.error(`[googleDrive] OAuth unavailable (${message}) and no service account fallback configured.`);
+      throw e;
+    }
   }
 
   // Option 2: Service Account (works for Shared Drives; My Drive uploads may fail due to no quota)
-  if (mode === "service_account") {
-    if (!cachedJwtClient) {
-      const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL as string;
-      const privateKey = (process.env.GOOGLE_PRIVATE_KEY as string).replace(/\\n/g, "\n");
-      cachedJwtClient = new google.auth.JWT({
-        email: clientEmail,
-        key: privateKey,
-        scopes,
-      });
-    }
-    return cachedJwtClient;
-  }
-
-  throw new Error(
-    "Google Drive credentials are not configured. Provide either OAuth (GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, GOOGLE_OAUTH_REFRESH_TOKEN) or Service Account (GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY)."
-  );
+  return getServiceAccountAuth(scopes);
 }
 
-function getDriveClient() {
-  const auth = getAuth(["https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/drive"]);
+async function getDriveClient() {
+  const auth = await getAuth(["https://www.googleapis.com/auth/drive.readonly", "https://www.googleapis.com/auth/drive"]);
   return google.drive({ version: "v3", auth });
 }
 
-function getDriveWriteClient() {
+async function getDriveWriteClient() {
   // Full drive scope required for uploads/deletes (My Drive with OAuth user or Shared Drives)
-  const auth = getAuth(["https://www.googleapis.com/auth/drive"]);
+  const auth = await getAuth(["https://www.googleapis.com/auth/drive"]);
   return google.drive({ version: "v3", auth });
 }
 
@@ -82,6 +125,7 @@ function getDriveWriteClient() {
 export async function verifyDriveAccess(): Promise<{
   ok: boolean;
   authMode: AuthMode;
+  fallbackActive: boolean;
   user: string | null;
   canUpload: boolean;
   folders: Record<DriveFileType, { id: string; ok: boolean; error?: string }>;
@@ -92,6 +136,7 @@ export async function verifyDriveAccess(): Promise<{
   const result: {
     ok: boolean;
     authMode: AuthMode;
+    fallbackActive: boolean;
     user: string | null;
     canUpload: boolean;
     folders: Record<DriveFileType, FolderCheck>;
@@ -99,6 +144,7 @@ export async function verifyDriveAccess(): Promise<{
   } = {
     ok: false,
     authMode,
+    fallbackActive: false,
     user: null,
     canUpload: false,
     folders: {
@@ -115,7 +161,8 @@ export async function verifyDriveAccess(): Promise<{
   }
 
   try {
-    const drive = getDriveWriteClient();
+    const drive = await getDriveWriteClient();
+    result.fallbackActive = isDriveOAuthFallbackActive();
 
     // Identify the acting account (and confirm the token actually works).
     try {
@@ -177,7 +224,7 @@ export function getFolderIdSafe(type: DriveFileType): string | null {
 }
 
 async function listFilesInFolder(folderId: string): Promise<DriveFile[]> {
-  const drive = getDriveClient();
+  const drive = await getDriveClient();
   const files: DriveFile[] = [];
   let pageToken: string | undefined;
 
@@ -236,7 +283,7 @@ export async function getDriveFilesByFolderId(folderId: string): Promise<DriveFi
 }
 
 export async function ensureDriveSubfolder(parentFolderId: string, name: string): Promise<string> {
-  const drive = getDriveWriteClient();
+  const drive = await getDriveWriteClient();
   const safeName = name.replace(/'/g, "\\'");
   const existing = await drive.files.list({
     q: `'${parentFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and name = '${safeName}' and trashed = false`,
@@ -268,7 +315,7 @@ export async function uploadDriveFile(params: {
   buffer: Buffer;
   subfolderName?: string;
 }): Promise<DriveFile & { parentFolderId?: string }> {
-  const drive = getDriveWriteClient();
+  const drive = await getDriveWriteClient();
   const rootFolderId = getFolderId(params.folderType);
   const parentId = params.subfolderName
     ? await ensureDriveSubfolder(rootFolderId, params.subfolderName)
@@ -313,7 +360,7 @@ export async function uploadDriveFile(params: {
 }
 
 export async function deleteDriveFile(fileId: string): Promise<void> {
-  const drive = getDriveWriteClient();
+  const drive = await getDriveWriteClient();
   await drive.files.delete({ fileId, supportsAllDrives: true });
 }
 
@@ -327,6 +374,8 @@ export function getDriveConfigStatus() {
     authMode: getAuthMode(),
     oauthConfigured,
     serviceAccountConfigured,
+    // True while OAuth failed and reads are being served by the service account.
+    fallbackActive: isDriveOAuthFallbackActive(),
     // True when OAuth is only partially filled in (a common cause of silent fallback)
     oauthPartial:
       (!!oauth.clientId || !!oauth.clientSecret || !!oauth.refreshToken) && !oauthConfigured,

@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Search } from "lucide-react";
 import PostCard from "./PostCard";
+import SearchBar from "./SearchBar";
 
 interface PostItem {
   _id: string;
@@ -40,15 +40,15 @@ export default function KnowledgeList({ posts }: { posts: PostItem[] }) {
   return (
     <div>
       <div className="mb-6 space-y-4">
-        <div className="relative">
-          <Search size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            className="input pl-10"
-            placeholder="Search teachings by title or content..."
+        {posts.length > 0 && (
+          <SearchBar
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={setQuery}
+            suggestions={posts.map((p) => p.title)}
+            placeholder="Search teachings by title or content..."
+            ariaLabel="Search knowledge teachings"
           />
-        </div>
+        )}
         {authorFilters.length > 1 && (
           <div className="flex flex-wrap gap-2">
             {authorFilters.map((a) => {

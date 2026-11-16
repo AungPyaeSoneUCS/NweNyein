@@ -27,7 +27,9 @@ type Props = {
     configured: {
       authMode?: string;
       oauthConfigured?: boolean;
+      oauthPartial?: boolean;
       serviceAccountConfigured: boolean;
+      fallbackActive?: boolean;
       folders: { photos: string; songs: string; books: string };
     };
     error: string | null;
@@ -41,6 +43,7 @@ type Props = {
 type VerifyResult = {
   ok: boolean;
   authMode: string;
+  fallbackActive?: boolean;
   user: string | null;
   canUpload: boolean;
   folders: Record<string, { id: string; ok: boolean; error?: string }>;
@@ -188,8 +191,11 @@ export default function DashboardAnalytics({ mongo, drive, recentPosts }: Props)
             <p className="text-sm font-semibold text-slate-800 flex items-center gap-2"><HardDrive size={16} className={(drive.configured.oauthConfigured || drive.configured.serviceAccountConfigured) ? "text-emerald-600" : "text-amber-600"} /> Google Drive Authentication</p>
             <p className="mt-2 text-sm text-slate-600">Mode: <span className="font-medium text-slate-800">{drive.configured.authMode === "oauth" ? "OAuth 2.0 (User/Owner quota)" : drive.configured.authMode === "service_account" ? "Service Account" : "Not configured"}</span></p>
             <p className="mt-1 text-xs text-slate-500">{drive.configured.authMode === "oauth" ? "Recommended for personal My Drive uploads." : drive.configured.authMode === "service_account" ? "Use for Shared Drives; My Drive uploads may fail without owner quota." : "Set OAuth or Service Account credentials in environment."}</p>
-            {(drive.configured as any).oauthPartial && (
+            {drive.configured.oauthPartial && (
               <p className="mt-1 text-xs text-amber-700">OAuth is only partially configured — fill all three GOOGLE_OAUTH_* values or the app falls back to the service account.</p>
+            )}
+            {drive.configured.fallbackActive && (
+              <p className="mt-1 text-xs text-amber-700">OAuth is failing right now; reads are temporarily served by the service account. Uploads need OAuth working.</p>
             )}
             {drive.error && <p className="mt-1 text-xs text-red-700">{drive.error}</p>}
           </div>
@@ -205,6 +211,9 @@ export default function DashboardAnalytics({ mongo, drive, recentPosts }: Props)
                 <p className="mt-1 text-xs text-slate-600">
                   Mode: {verifyResult.authMode} · Account: {verifyResult.user || "unknown"} · Upload capable: {verifyResult.canUpload ? "yes" : "no"}
                 </p>
+                {verifyResult.fallbackActive && (
+                  <p className="mt-1 text-xs text-amber-700">OAuth failed — reads are using the service-account fallback.</p>
+                )}
                 {verifyResult.error && <p className="mt-1 text-xs text-red-700">{verifyResult.error}</p>}
                 <ul className="mt-2 space-y-1 text-xs">
                   {Object.entries(verifyResult.folders).map(([k, f]) => (
