@@ -364,6 +364,72 @@ export async function deleteDriveFile(fileId: string): Promise<void> {
   await drive.files.delete({ fileId, supportsAllDrives: true });
 }
 
+export interface DriveAudioStream {
+  name: string;
+  mimeType: string;
+  size?: number;
+  /** 200 or 206 (partial content). */
+  status: number;
+  /** null when Drive returned an error status. */
+  stream: Readable | null;
+  contentRange?: string;
+  contentLength?: string;
+}
+
+/**
+ * Opens an authenticated audio stream for a file in the Songs folder.
+ *
+ * Google Drive's public `uc?export=...` URLs are blocked by Chrome's Opaque
+ * Response Blocking (net::ERR_BLOCKED_BY_ORB) when used as an <audio> source,
+ * so playback goes through /api/audio/[fileId] instead. Forwarding the Range
+ * header keeps seeking and partial buffering working.
+ */
+export async function openDriveAudioStream(
+  fileId: string,
+  rangeHeader?: string | null
+): Promise<DriveAudioStream> {
+  const drive = await getDriveClient();
+
+  const meta = await drive.files.get({
+    fileId,
+    fields: "id, name, mimeType, size, parents",
+    supportsAllDrives: true,
+  });
+
+  const songsFolderId = getFolderIdSafe("songs");
+  const parents = meta.data.parents || [];
+  if (!songsFolderId || !parents.includes(songsFolderId)) {
+    const error = new Error("This file is not in the Songs folder.") as Error & { status?: number };
+    error.status = 403;
+    throw error;
+  }
+
+  const media: any = await drive.files.get(
+    { fileId, alt: "media", supportsAllDrives: true, acknowledgeAbuse: true },
+    {
+      responseType: "stream",
+      headers: rangeHeader ? { Range: rangeHeader } : undefined,
+      validateStatus: () => true,
+    }
+  );
+
+  const headers = media.headers || {};
+  const headerValue = (name: string): string | undefined => {
+    const value = typeof headers.get === "function" ? headers.get(name) : headers[name];
+    return typeof value === "string" && value.length > 0 ? value : undefined;
+  };
+
+  return {
+    name: meta.data.name || "audio",
+    mimeType: meta.data.mimeType || "audio/mpeg",
+    size: meta.data.size ? Number(meta.data.size) : undefined,
+    status: typeof media.status === "number" ? media.status : 200,
+    stream: media.status >= 400 ? null : (media.data as Readable),
+    contentRange: headerValue("content-range"),
+    contentLength: headerValue("content-length"),
+  };
+}
+
 export type DriveImageScope = "photos" | "all";
 
 export interface DriveImageFile extends DriveFile {

@@ -43,7 +43,9 @@ export function getPhotoUrl(fileId: string) {
 }
 
 export function getAudioUrl(fileId: string) {
-  return `https://docs.google.com/uc?export=open&id=${fileId}`;
+  // Streamed through our own origin: Google's public Drive URLs are blocked by
+  // Chrome (net::ERR_BLOCKED_BY_ORB) and cannot be used as an <audio> source.
+  return `/api/audio/${fileId}`;
 }
 
 export function getPreviewUrl(fileId: string) {
