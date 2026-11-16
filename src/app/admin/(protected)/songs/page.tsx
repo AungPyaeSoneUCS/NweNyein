@@ -3,10 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { UploadCloud, Trash2, Play, Music2, RefreshCw } from "lucide-react";
-import { getAudioUrl, formatFileSize, type DriveFile } from "@/lib/driveUrls";
+import { getAudioUrl, getPhotoUrl, formatFileSize, type DriveFile } from "@/lib/driveUrls";
+import DriveImagePicker from "@/components/admin/DriveImagePicker";
 
 export default function SongsAdminPage() {
   const [files, setFiles] = useState<DriveFile[]>([]);
+  const [covers, setCovers] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -18,13 +20,49 @@ export default function SongsAdminPage() {
   async function load() {
     setLoading(true);
     try {
-      const res = await fetch("/api/drive/files?type=songs", { cache: "no-store" });
-      const data = await res.json();
+      const [filesRes, coversRes] = await Promise.all([
+        fetch("/api/drive/files?type=songs", { cache: "no-store" }),
+        fetch("/api/admin/media-meta?kind=songs", { cache: "no-store" }),
+      ]);
+      const data = await filesRes.json();
       setFiles(data.files || []);
+
+      if (coversRes.ok) {
+        const meta = await coversRes.json();
+        const map: Record<string, string> = {};
+        for (const item of meta.items || []) map[item.fileId] = item.coverImageDriveId;
+        setCovers(map);
+      }
     } catch { setFiles([]); }
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
+
+  async function saveCover(fileId: string, coverImageDriveId: string) {
+    setCovers((prev) => {
+      const next = { ...prev };
+      if (coverImageDriveId) next[fileId] = coverImageDriveId;
+      else delete next[fileId];
+      return next;
+    });
+    try {
+      const res = await fetch("/api/admin/media-meta", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "songs", fileId, coverImageDriveId }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to save thumbnail");
+      }
+      setMsg("Track thumbnail saved.");
+    } catch (e: any) {
+      alert(e.message || "Failed to save thumbnail");
+      await load();
+    } finally {
+      setTimeout(() => setMsg(null), 3000);
+    }
+  }
 
   const filtered = useMemo(() => files.filter(f => f.name.toLowerCase().includes(query.toLowerCase())), [files, query]);
 
@@ -97,10 +135,22 @@ export default function SongsAdminPage() {
               <div key={f.id} className="rounded-xl border border-slate-200 p-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0 flex items-start gap-3">
-                    <span className="mt-0.5 inline-flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-saffron/10 text-saffron-dark"><Music2 size={18}/></span>
+                    {covers[f.id] ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={getPhotoUrl(covers[f.id])} alt="" className="mt-0.5 h-10 w-10 flex-none rounded-xl border border-slate-200 bg-slate-100 object-cover" />
+                    ) : (
+                      <span className="mt-0.5 inline-flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-saffron/10 text-saffron-dark"><Music2 size={18}/></span>
+                    )}
                     <div className="min-w-0">
                       <p className="font-medium text-slate-900 break-words">{f.name}</p>
                       <p className="mt-1 text-sm text-slate-600">{formatFileSize(f.size)} · {f.modifiedTime ? new Date(f.modifiedTime).toLocaleString() : "—"}</p>
+                      <DriveImagePicker
+                        compact
+                        className="mt-2"
+                        buttonLabel="Thumbnail"
+                        value={covers[f.id] || ""}
+                        onChange={(id) => saveCover(f.id, id)}
+                      />
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">

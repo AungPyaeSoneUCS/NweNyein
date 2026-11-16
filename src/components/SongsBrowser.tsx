@@ -5,7 +5,13 @@ import AudioPlayer from "./AudioPlayer";
 import SearchBar from "./SearchBar";
 import type { DriveFile } from "@/lib/driveUrls";
 
-export default function SongsBrowser({ tracks }: { tracks: DriveFile[] }) {
+export default function SongsBrowser({
+  tracks,
+  covers = {},
+}: {
+  tracks: DriveFile[];
+  covers?: Record<string, string>;
+}) {
   const [query, setQuery] = useState("");
 
   const audioTracks = useMemo(
@@ -40,7 +46,7 @@ export default function SongsBrowser({ tracks }: { tracks: DriveFile[] }) {
       )}
 
       {filtered.length > 0 ? (
-        <AudioPlayer key={query} tracks={filtered} />
+        <AudioPlayer key={query} tracks={filtered} covers={covers} />
       ) : (
         <div className="card p-8 text-center text-slate-600">
           {audioTracks.length > 0

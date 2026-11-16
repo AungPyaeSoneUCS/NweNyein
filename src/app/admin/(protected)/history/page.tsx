@@ -5,7 +5,8 @@ import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { Plus, Search, Pencil, Trash2, Eye, EyeOff, Save, X } from "lucide-react";
 import { slugify } from "@/lib/utils";
-import { getPhotoUrl, extractDriveId } from "@/lib/driveUrls";
+import { extractDriveId } from "@/lib/driveUrls";
+import DriveCoverField from "@/components/admin/DriveCoverField";
 
 const RichTextEditor = dynamic(() => import("@/components/admin/RichTextEditor"), { ssr: false });
 
@@ -104,8 +105,12 @@ export default function HistoryAdminPage() {
             <div><label className="block text-sm font-medium text-slate-700 mb-1">Sayadaw / Abbot Lineage</label><input className="w-full min-h-[44px] rounded-xl border border-slate-300 px-3" value={form.abbot} onChange={(e)=>setForm({...form,abbot:e.target.value})} /></div>
             <div className="md:col-span-2"><label className="block text-sm font-medium text-slate-700 mb-1">Title</label><input className="w-full min-h-[44px] rounded-xl border border-slate-300 px-3" value={form.title} onChange={(e)=>setForm({...form,title:e.target.value})} /></div>
             <div><label className="block text-sm font-medium text-slate-700 mb-1">Slug</label><input className="w-full min-h-[44px] rounded-xl border border-slate-300 px-3" value={form.slug} onChange={(e)=>{setSlugTouched(true); setForm({...form,slug:e.target.value});}} onBlur={()=>setForm(f=>({...f,slug:slugify(f.slug||f.title||f.era)}))} /></div>
-            <div><label className="block text-sm font-medium text-slate-700 mb-1">Archival Photo (Drive ID or full link)</label><input className="w-full min-h-[44px] rounded-xl border border-slate-300 px-3" placeholder="Paste Drive File ID or https://drive.google.com/file/d/.../view" value={form.coverImageDriveId} onChange={(e)=>setForm({...form,coverImageDriveId:e.target.value})} onBlur={(e)=>setForm(f=>({...f,coverImageDriveId:extractDriveId(e.target.value)}))} onPaste={(e)=>{const t=e.clipboardData.getData('text'); if(t){e.preventDefault(); setForm(f=>({...f,coverImageDriveId:extractDriveId(t)}));}}} /></div>
-            {extractDriveId(form.coverImageDriveId) && <div className="md:col-span-2"><img src={getPhotoUrl(extractDriveId(form.coverImageDriveId))} alt="Archival preview" className="h-44 w-full max-w-md rounded-xl border object-cover" /></div>}
+            <DriveCoverField
+              className="md:col-span-2"
+              label="Archival Photo (choose from Google Drive)"
+              value={form.coverImageDriveId}
+              onChange={(id) => setForm({ ...form, coverImageDriveId: id })}
+            />
             <div className="md:col-span-2"><label className="block text-sm font-medium text-slate-700 mb-1">Historical Narrative</label><RichTextEditor value={form.content} onChange={(html)=>setForm({...form,content:html})} /></div>
             <label className="inline-flex items-center gap-2 text-sm font-medium text-slate-700"><input type="checkbox" className="h-4 w-4 accent-saffron" checked={form.published} onChange={(e)=>setForm({...form,published:e.target.checked})} /> Published</label>
           </div>

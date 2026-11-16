@@ -5,7 +5,8 @@ import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { Plus, Search, Pencil, Trash2, Eye, EyeOff, Save, X } from "lucide-react";
 import { slugify } from "@/lib/utils";
-import { getPhotoUrl, extractDriveId } from "@/lib/driveUrls";
+import { extractDriveId } from "@/lib/driveUrls";
+import DriveCoverField from "@/components/admin/DriveCoverField";
 
 const RichTextEditor = dynamic(() => import("@/components/admin/RichTextEditor"), { ssr: false });
 
@@ -26,7 +27,6 @@ export default function KnowledgeAdminPage() {
   const [form, setForm] = useState(emptyForm);
   const [slugTouched, setSlugTouched] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [uploadingCover, setUploadingCover] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
   async function load() {
@@ -81,21 +81,6 @@ export default function KnowledgeAdminPage() {
     await load();
   }
 
-  async function uploadCover(file: File) {
-    setUploadingCover(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("folderType", "photos");
-      fd.append("fileName", file.name);
-      const res = await fetch("/api/admin/drive/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Upload failed");
-      setForm((f) => ({ ...f, coverImageDriveId: data.file.id }));
-    } catch (e: any) { alert(e.message || "Cover upload failed"); }
-    finally { setUploadingCover(false); }
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -118,24 +103,12 @@ export default function KnowledgeAdminPage() {
             <div className="md:col-span-2"><label className="block text-sm font-medium text-slate-700 mb-1">Title</label><input className="w-full min-h-[44px] rounded-xl border border-slate-300 px-3" value={form.title} onChange={(e)=>setForm({...form,title:e.target.value})} /></div>
             <div><label className="block text-sm font-medium text-slate-700 mb-1">Slug (Burmese/English)</label><input className="w-full min-h-[44px] rounded-xl border border-slate-300 px-3" value={form.slug} onChange={(e)=>{setSlugTouched(true); setForm({...form,slug:e.target.value});}} onBlur={()=>setForm(f=>({...f,slug:slugify(f.slug||f.title)}))} /></div>
             <div><label className="block text-sm font-medium text-slate-700 mb-1">Sayadaw / Author</label><input className="w-full min-h-[44px] rounded-xl border border-slate-300 px-3" value={form.author} onChange={(e)=>setForm({...form,author:e.target.value})} /></div>
-            <div className="md:col-span-2"><label className="block text-sm font-medium text-slate-700 mb-1">Cover Image (Drive ID, full Google Drive link, or upload)</label>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <input
-                  className="flex-1 min-h-[44px] rounded-xl border border-slate-300 px-3"
-                  placeholder="Paste Drive File ID or link (e.g. https://drive.google.com/file/d/.../view)"
-                  value={form.coverImageDriveId}
-                  onChange={(e)=>setForm({...form,coverImageDriveId:e.target.value})}
-                  onBlur={(e)=>setForm(f=>({...f,coverImageDriveId:extractDriveId(e.target.value)}))}
-                  onPaste={(e)=>{ const text = e.clipboardData.getData('text'); if(text){ e.preventDefault(); setForm(f=>({...f,coverImageDriveId:extractDriveId(text)})); } }}
-                />
-                <label className="inline-flex min-h-[44px] cursor-pointer items-center justify-center rounded-xl border border-slate-300 px-4 text-sm font-medium hover:bg-slate-50">
-                  {uploadingCover ? "Uploading..." : "Upload Cover"}
-                  <input type="file" accept="image/*" className="hidden" onChange={(e)=> e.target.files?.[0] && uploadCover(e.target.files[0])} />
-                </label>
-              </div>
-              <p className="mt-1 text-xs text-slate-500">Supports file IDs and share links like https://drive.google.com/file/d/FILE_ID/view</p>
-              {extractDriveId(form.coverImageDriveId) && <img src={getPhotoUrl(extractDriveId(form.coverImageDriveId))} alt="Cover preview" className="mt-3 h-40 w-full max-w-sm rounded-xl border object-cover" />}
-            </div>
+            <DriveCoverField
+              className="md:col-span-2"
+              label="Cover Image (choose from Google Drive)"
+              value={form.coverImageDriveId}
+              onChange={(id) => setForm({ ...form, coverImageDriveId: id })}
+            />
             <div className="md:col-span-2"><label className="block text-sm font-medium text-slate-700 mb-1">Content (Burmese Unicode supported)</label><RichTextEditor value={form.content} onChange={(html)=>setForm({...form,content:html})} /></div>
             <label className="inline-flex items-center gap-2 text-sm font-medium text-slate-700"><input type="checkbox" className="h-4 w-4 accent-saffron" checked={form.published} onChange={(e)=>setForm({...form,published:e.target.checked})} /> Published</label>
           </div>

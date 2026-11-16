@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Pause, Play, SkipBack, SkipForward, Music2 } from "lucide-react";
 import { motion } from "framer-motion";
-import { getAudioUrl, type DriveFile } from "@/lib/driveUrls";
+import { getAudioUrl, getPhotoUrl, type DriveFile } from "@/lib/driveUrls";
 
 function Equalizer({ playing }: { playing: boolean }) {
   return (
@@ -20,7 +20,13 @@ function Equalizer({ playing }: { playing: boolean }) {
   );
 }
 
-export default function AudioPlayer({ tracks }: { tracks: DriveFile[] }) {
+export default function AudioPlayer({
+  tracks,
+  covers = {},
+}: {
+  tracks: DriveFile[];
+  covers?: Record<string, string>;
+}) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [current, setCurrent] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -98,6 +104,7 @@ export default function AudioPlayer({ tracks }: { tracks: DriveFile[] }) {
       <ul className="space-y-2">
         {playable.map((t, i) => {
           const active = i === current;
+          const cover = covers[t.id];
           return (
             <li key={t.id}>
               <motion.button
@@ -114,9 +121,19 @@ export default function AudioPlayer({ tracks }: { tracks: DriveFile[] }) {
                 }`}
               >
                 <span className="flex min-w-0 items-center gap-3">
-                  <span className={`inline-flex h-9 w-9 flex-none items-center justify-center rounded-xl text-sm font-semibold ${active ? "bg-saffron text-white" : "bg-maroon/10 text-maroon"}`}>
-                    {i + 1}
-                  </span>
+                  {cover ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={getPhotoUrl(cover)}
+                      alt=""
+                      loading="lazy"
+                      className={`h-9 w-9 flex-none rounded-xl border object-cover ${active ? "border-saffron/60" : "border-amber-900/10"}`}
+                    />
+                  ) : (
+                    <span className={`inline-flex h-9 w-9 flex-none items-center justify-center rounded-xl text-sm font-semibold ${active ? "bg-saffron text-white" : "bg-maroon/10 text-maroon"}`}>
+                      {i + 1}
+                    </span>
+                  )}
                   <span className="min-w-0">
                     <span className="block truncate font-medium text-charcoal">{t.name.replace(/\.[^/.]+$/, "")}</span>
                     <span className="block text-xs text-slate-500">Dhamma audio</span>
@@ -140,8 +157,13 @@ export default function AudioPlayer({ tracks }: { tracks: DriveFile[] }) {
           <div className="px-4 py-3 sm:px-5">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
               <div className="flex min-w-0 flex-1 items-center gap-3">
-                <div className="hidden sm:flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-white/10 text-saffron-light">
-                  <Music2 size={18} />
+                <div className="hidden sm:flex h-10 w-10 flex-none items-center justify-center overflow-hidden rounded-xl bg-white/10 text-saffron-light">
+                  {track && covers[track.id] ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={getPhotoUrl(covers[track.id])} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <Music2 size={18} />
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">

@@ -7,12 +7,19 @@ import {
   formatFileSize,
   getDownloadUrl,
   getFileBadge,
+  getPhotoUrl,
   type DriveFile,
 } from "@/lib/driveUrls";
 import SearchBar from "./SearchBar";
 import { StaggerGrid, StaggerItem } from "./motion/StaggerGrid";
 
-export default function LibraryGrid({ files }: { files: DriveFile[] }) {
+export default function LibraryGrid({
+  files,
+  covers = {},
+}: {
+  files: DriveFile[];
+  covers?: Record<string, string>;
+}) {
   const [query, setQuery] = useState("");
 
   const suggestions = useMemo(
@@ -43,9 +50,21 @@ export default function LibraryGrid({ files }: { files: DriveFile[] }) {
           {filtered.map((file) => {
             const badge = getFileBadge(file.mimeType, file.name);
             const title = file.name.replace(/\.[^/.]+$/, "");
+            const cover = covers[file.id];
             return (
               <StaggerItem key={file.id}>
                 <div className="card flex h-full flex-col p-5 sm:p-6">
+                  {cover && (
+                    <div className="mb-4 overflow-hidden rounded-xl border border-amber-900/10 bg-amber-50/40">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={getPhotoUrl(cover)}
+                        alt=""
+                        loading="lazy"
+                        className="h-36 w-full object-cover"
+                      />
+                    </div>
+                  )}
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 inline-flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-saffron/10 text-saffron-dark">
                       {badge === "PDF" ? <BookOpen size={22} /> : <FileText size={22} />}

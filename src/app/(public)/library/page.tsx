@@ -1,4 +1,5 @@
 import { getDriveFiles } from "@/lib/googleDrive";
+import { getMediaCovers } from "@/lib/mediaMeta";
 import LibraryGrid from "@/components/LibraryGrid";
 
 export const metadata = { title: "E-Book & Document Library" };
@@ -16,12 +17,15 @@ export default async function LibraryPage() {
     error = "The library is temporarily unavailable. Please try again in a moment.";
   }
 
+  // Thumbnails are optional: getMediaCovers never throws.
+  const covers = error ? {} : await getMediaCovers("books");
+
   return (
     <div className="container-page py-8 md:py-10">
       {error ? (
         <div className="card border-red-200/60 bg-red-50/70 p-6 text-red-700">{error}</div>
       ) : (
-        <LibraryGrid files={files} />
+        <LibraryGrid files={files} covers={covers} />
       )}
     </div>
   );

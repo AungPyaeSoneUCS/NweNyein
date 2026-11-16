@@ -364,6 +364,101 @@ export async function deleteDriveFile(fileId: string): Promise<void> {
   await drive.files.delete({ fileId, supportsAllDrives: true });
 }
 
+export type DriveImageScope = "photos" | "all";
+
+export interface DriveImageFile extends DriveFile {
+  /** Name of the Drive folder the image lives in (nice for the picker UI). */
+  folderName?: string;
+}
+
+/**
+ * Lists image files for the admin "choose from Drive" picker.
+ *
+ * - scope "photos": walks the configured Photos folder (including album
+ *   subfolders) so event albums are selectable too.
+ * - scope "all": every image the connected account can read.
+ */
+export async function listDriveImages(options?: {
+  scope?: DriveImageScope;
+  folderId?: string;
+  max?: number;
+}): Promise<DriveImageFile[]> {
+  const drive = await getDriveClient();
+  const scope = options?.scope ?? "photos";
+  const max = Math.min(options?.max ?? 300, 500);
+
+  const toImage = (file: any, folderName?: string): DriveImageFile => ({
+    id: file.id as string,
+    name: file.name as string,
+    mimeType: file.mimeType || "image/jpeg",
+    size: file.size || undefined,
+    modifiedTime: file.modifiedTime || undefined,
+    thumbnailLink: file.thumbnailLink || undefined,
+    folderName,
+  });
+
+  if (scope === "all") {
+    const res = await drive.files.list({
+      q: "mimeType contains 'image/' and trashed = false",
+      fields: "files(id, name, mimeType, size, modifiedTime, thumbnailLink)",
+      orderBy: "modifiedTime desc",
+      pageSize: max,
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true,
+    });
+    return (res.data.files || [])
+      .filter((f) => f.id && f.name)
+      .map((f) => toImage(f))
+      .slice(0, max);
+  }
+
+  const rootId = options?.folderId || getFolderId("photos");
+  const queue: { id: string; name: string; depth: number }[] = [{ id: rootId, name: "", depth: 0 }];
+  const seen = new Set<string>();
+  const results: DriveImageFile[] = [];
+
+  while (queue.length && results.length < max) {
+    const folder = queue.shift()!;
+    if (!folder.id || seen.has(folder.id)) continue;
+    seen.add(folder.id);
+
+    const images = await drive.files.list({
+      q: `'${folder.id}' in parents and trashed = false and mimeType contains 'image/'`,
+      fields: "files(id, name, mimeType, size, modifiedTime, thumbnailLink)",
+      orderBy: "modifiedTime desc",
+      pageSize: Math.min(200, max - results.length),
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true,
+    });
+
+    for (const file of images.data.files || []) {
+      if (!file.id || !file.name || seen.has(file.id)) continue;
+      seen.add(file.id);
+      results.push(toImage(file, folder.name || undefined));
+      if (results.length >= max) break;
+    }
+
+    // Album subfolders (max depth 3) are browsable as well.
+    if (folder.depth < 3) {
+      const subfolders = await drive.files.list({
+        q: `'${folder.id}' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder'`,
+        fields: "files(id, name)",
+        orderBy: "name_natural",
+        pageSize: 100,
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true,
+      });
+      for (const sub of subfolders.data.files || []) {
+        if (sub.id && sub.name) queue.push({ id: sub.id, name: sub.name, depth: folder.depth + 1 });
+      }
+    }
+  }
+
+  return results
+    .sort((a, b) => (b.modifiedTime || "").localeCompare(a.modifiedTime || ""))
+    .slice(0, max);
+}
+
 export function getDriveConfigStatus() {
   const oauth = getOAuthEnv();
   const oauthConfigured = !!(oauth.clientId && oauth.clientSecret && oauth.refreshToken);

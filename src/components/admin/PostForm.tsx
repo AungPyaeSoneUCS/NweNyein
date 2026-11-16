@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { slugify } from "@/lib/utils";
-import { getPhotoUrl, extractDriveId } from "@/lib/driveUrls";
+import { extractDriveId } from "@/lib/driveUrls";
+import DriveCoverField from "./DriveCoverField";
 
 const RichTextEditor = dynamic(() => import("./RichTextEditor"), { ssr: false });
 
@@ -42,11 +43,6 @@ export default function PostForm({ initial }: { initial?: Partial<PostFormValues
       setValues((v) => ({ ...v, slug: slugify(v.title) }));
     }
   }, [values.title, slugTouched]);
-
-  const coverPreview = useMemo(() => {
-    const id = extractDriveId(values.coverImageDriveId || "");
-    return id ? getPhotoUrl(id) : "";
-  }, [values.coverImageDriveId]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -121,17 +117,11 @@ export default function PostForm({ initial }: { initial?: Partial<PostFormValues
       </div>
 
       <div className="grid gap-5 md:grid-cols-2">
-        <div>
-          <label className="label">Cover Image Google Drive File ID</label>
-          <input className="input" value={values.coverImageDriveId} onChange={(e) => setValues({ ...values, coverImageDriveId: e.target.value })} placeholder="e.g. 1AbC...xyz" />
-          {coverPreview && (
-            <div className="mt-3">
-              <p className="text-xs text-slate-500 mb-1">Live preview</p>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={coverPreview} alt="Cover preview" className="h-40 w-full max-w-sm rounded-lg border border-maroon/10 object-cover bg-maroon/5" />
-            </div>
-          )}
-        </div>
+        <DriveCoverField
+          label="Cover Image (choose from Google Drive)"
+          value={values.coverImageDriveId || ""}
+          onChange={(id) => setValues((v) => ({ ...v, coverImageDriveId: id }))}
+        />
         <div>
           <label className="label">Google Drive Album Folder ID (Activities)</label>
           <input className="input" value={values.driveAlbumFolderId} onChange={(e) => setValues({ ...values, driveAlbumFolderId: e.target.value })} placeholder="Optional, for activity photo galleries" />

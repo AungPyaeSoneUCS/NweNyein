@@ -1,4 +1,5 @@
 import { getDriveFiles } from "@/lib/googleDrive";
+import { getMediaCovers } from "@/lib/mediaMeta";
 import SongsBrowser from "@/components/SongsBrowser";
 
 export const metadata = { title: "Dhamma Songs & Chants" };
@@ -16,12 +17,15 @@ export default async function SongsPage() {
     error = "Songs are temporarily unavailable. Please try again in a moment.";
   }
 
+  // Thumbnails are optional: getMediaCovers never throws.
+  const covers = error ? {} : await getMediaCovers("songs");
+
   return (
     <div className="container-page py-8 md:py-10">
       {error ? (
         <div className="card border-red-200/60 bg-red-50/70 p-6 text-red-700">{error}</div>
       ) : (
-        <SongsBrowser tracks={tracks} />
+        <SongsBrowser tracks={tracks} covers={covers} />
       )}
     </div>
   );

@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Plus, Search, Pencil, Trash2, Eye, EyeOff, Save, X, UploadCloud, Images } from "lucide-react";
 import { slugify } from "@/lib/utils";
 import { extractDriveId } from "@/lib/driveUrls";
+import DriveCoverField from "@/components/admin/DriveCoverField";
 
 const RichTextEditor = dynamic(() => import("@/components/admin/RichTextEditor"), { ssr: false });
 
@@ -115,7 +116,12 @@ export default function ActivitiesAdminPage() {
             <div><label className="block text-sm font-medium text-slate-700 mb-1">Event Date</label><input type="date" className="w-full min-h-[44px] rounded-xl border border-slate-300 px-3" value={form.eventDate} onChange={(e)=>setForm({...form,eventDate:e.target.value})} /></div>
             <div><label className="block text-sm font-medium text-slate-700 mb-1">Location</label><input className="w-full min-h-[44px] rounded-xl border border-slate-300 px-3" value={form.location} onChange={(e)=>setForm({...form,location:e.target.value})} /></div>
             <div><label className="block text-sm font-medium text-slate-700 mb-1">Slug</label><input className="w-full min-h-[44px] rounded-xl border border-slate-300 px-3" value={form.slug} onChange={(e)=>{setSlugTouched(true); setForm({...form,slug:e.target.value});}} onBlur={()=>setForm(f=>({...f,slug:slugify(f.slug||f.title)}))} /></div>
-            <div><label className="block text-sm font-medium text-slate-700 mb-1">Cover Image (Drive ID or full link)</label><input className="w-full min-h-[44px] rounded-xl border border-slate-300 px-3" placeholder="Drive File ID or https://drive.google.com/file/d/.../view" value={form.coverImageDriveId} onChange={(e)=>setForm({...form,coverImageDriveId:e.target.value})} onBlur={(e)=>setForm(f=>({...f,coverImageDriveId:extractDriveId(e.target.value)}))} onPaste={(e)=>{const t=e.clipboardData.getData('text'); if(t){e.preventDefault(); setForm(f=>({...f,coverImageDriveId:extractDriveId(t)}));}}} /></div>
+            <DriveCoverField
+              className="md:col-span-2"
+              label="Cover Image (choose from Google Drive)"
+              value={form.coverImageDriveId}
+              onChange={(id) => setForm({ ...form, coverImageDriveId: id })}
+            />
             <div className="md:col-span-2"><label className="block text-sm font-medium text-slate-700 mb-1">Description</label><RichTextEditor value={form.content} onChange={(html)=>setForm({...form,content:html})} /></div>
 
             <div className="md:col-span-2 rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">

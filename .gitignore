@@ -26,6 +26,9 @@ yarn-error.log*
 .env
 .env*.local
 
+# local credentials / recovery keys
+/sec
+
 # vercel
 .vercel
 
