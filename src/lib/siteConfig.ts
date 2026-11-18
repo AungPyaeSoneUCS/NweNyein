@@ -1,6 +1,13 @@
 /** Shared public branding and location details. */
 export const SITE_NAME = "နွယ်ငြိမ်းတောင်ပေါ်ကျောင်းတိုက်";
 
+/** Traditional homage shown with the monastery name. */
+export const MONASTERY_INVOCATION = "နမော တဿ ဘဂဝတော အရဟတော သမ္မာသမ္ဗုဒ္ဓဿ";
+
+/** Home page introduction. */
+export const HOME_HERO_DESCRIPTION =
+  "ဓမ္မစာပေများ လေ့လာဆည်းပူးရန်၊ တရားနှလုံးသွင်း ဆင်ခြင်ရန်နှင့် မေတ္တာကရုဏာရှေ့ထား၍ ပရဟိတအကျိုးပြုလုပ်ငန်းများ ဆောင်ရွက်ရန် အေးချမ်းဆိတ်ငြိမ်သော ဓမ္မရိပ်မြုံတစ်ခု ဖြစ်ပါသည်။ တရားတော်များ၊ သမိုင်းကြောင်းများ၊ သာသနာရေးလှုပ်ရှားမှုများ၊ ဘုရားရှိခိုးနှင့် ဂါထာတော်များအပြင် ကျွန်ုပ်တို့၏ ဒစ်ဂျစ်တယ်စာကြည့်တိုက်ကိုပါ ဝင်ရောက်လေ့လာ ကြည်ညိုနိုင်ပါသည်။";
+
 /** Monastery coordinates (from the Google Maps place embed). */
 export const MONASTERY_LOCATION = {
   lat: 18.236648077883935,

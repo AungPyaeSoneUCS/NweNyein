@@ -7,7 +7,11 @@ import FadeIn from "@/components/motion/FadeIn";
 import { StaggerGrid, StaggerItem } from "@/components/motion/StaggerGrid";
 import { ArrowRight, BookOpen, Music2, Landmark } from "lucide-react";
 import MonasteryMap from "@/components/MonasteryMap";
-import { SITE_NAME } from "@/lib/siteConfig";
+import {
+  HOME_HERO_DESCRIPTION,
+  MONASTERY_INVOCATION,
+  SITE_NAME,
+} from "@/lib/siteConfig";
 
 export const dynamic = "force-dynamic";
 
@@ -53,14 +57,14 @@ export default async function HomePage() {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.12),transparent_55%)]" />
           </div>
           <FadeIn className="relative max-w-3xl">
-            <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-amber-100 backdrop-blur-sm">
-              Burmese Theravada Buddhist Monastery
+            <span className="block w-fit max-w-full rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-center font-myanmar text-[11px] leading-relaxed text-amber-100 backdrop-blur-sm sm:text-xs">
+              {MONASTERY_INVOCATION}
             </span>
-            <h1 className="mt-5 font-myanmar text-4xl font-bold leading-[1.15] text-white sm:text-5xl md:text-6xl">
+            <h1 className="mt-5 whitespace-nowrap font-myanmar text-[clamp(1rem,5vw,2.75rem)] font-bold leading-tight tracking-tight text-white">
               {SITE_NAME}
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-relaxed text-ivory/90 sm:text-lg sm:leading-loose">
-              A serene sanctuary for Dhamma learning, reflection, and compassionate service. Discover teachings, history, activities, chants, and our digital library.
+            <p className="mt-5 max-w-2xl font-myanmar text-sm leading-7 text-ivory/90 sm:text-base sm:leading-8">
+              {HOME_HERO_DESCRIPTION}
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link href="/knowledge" className="btn-primary w-full sm:w-auto">

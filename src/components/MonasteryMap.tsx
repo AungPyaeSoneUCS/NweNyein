@@ -12,6 +12,7 @@ import {
   MAP_DIRECTIONS_URL,
   MAP_EMBED_URL,
   MAP_SHORT_URL,
+  MONASTERY_INVOCATION,
   MONASTERY_LOCATION,
   SITE_NAME,
 } from "@/lib/siteConfig";
@@ -126,7 +127,9 @@ export default function MonasteryMap() {
                   <p className="font-myanmar text-base font-semibold leading-snug text-maroon sm:text-lg">
                     {SITE_NAME}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">Burmese Theravada Buddhist Monastery</p>
+                  <p className="mt-1 font-myanmar text-xs leading-relaxed text-slate-500">
+                    {MONASTERY_INVOCATION}
+                  </p>
                 </div>
               </div>
               <dl className="mt-4 space-y-2 text-sm">
