@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SITE_NAME } from "@/lib/siteConfig";
 import { INSTALL_EVENT, useInstallPrompt } from "./pwa/useInstallPrompt";
 
 const desktopLinks = [
@@ -64,11 +65,8 @@ export default function Navbar() {
       <header className="md:hidden sticky top-0 z-40 border-b border-amber-900/10 bg-white/80 backdrop-blur-lg">
         <div className="container-page flex h-14 items-center justify-between">
           <Link href="/" className="flex items-center gap-2 font-semibold text-maroon">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-saffron to-saffron-dark text-white shadow-sm">☸</span>
-            <span className="leading-tight">
-              <span className="block text-sm">NweNyeinHill</span>
-              <span className="block text-[10px] font-normal text-slate-500">Monastery</span>
-            </span>
+            <span className="inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-gradient-to-br from-saffron to-saffron-dark text-white shadow-sm">☸</span>
+            <span className="block font-myanmar text-xs leading-tight sm:text-sm">{SITE_NAME}</span>
           </Link>
           <button
             onClick={() => setMoreOpen(true)}
@@ -85,11 +83,8 @@ export default function Navbar() {
         <header className="mx-auto max-w-6xl rounded-2xl border border-amber-200/60 bg-white/80 backdrop-blur-lg shadow-sm">
           <div className="flex h-16 items-center justify-between px-4 lg:px-6">
             <Link href="/" className="flex items-center gap-2.5 font-semibold text-maroon">
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-saffron to-saffron-dark text-white shadow-sm">☸</span>
-              <span className="leading-tight">
-                <span className="block text-base">NweNyeinHill</span>
-                <span className="block text-xs font-normal text-slate-500">Monastery</span>
-              </span>
+              <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-full bg-gradient-to-br from-saffron to-saffron-dark text-white shadow-sm">☸</span>
+              <span className="block font-myanmar text-sm leading-tight lg:text-base">{SITE_NAME}</span>
             </Link>
             <nav className="flex items-center gap-1">
               {desktopLinks.map((l) => {
@@ -201,7 +196,7 @@ export default function Navbar() {
                       <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-saffron/15 text-saffron-dark"><Download size={20} /></span>
                       <span>
                         <span className="block font-medium">Install App</span>
-                        <span className="block text-xs text-slate-500">Add NweNyeinHill to your home screen</span>
+                        <span className="block text-xs text-slate-500">Add {SITE_NAME} to your home screen</span>
                       </span>
                     </button>
                   )}

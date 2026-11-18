@@ -6,6 +6,8 @@ import { getDriveFiles } from "@/lib/googleDrive";
 import FadeIn from "@/components/motion/FadeIn";
 import { StaggerGrid, StaggerItem } from "@/components/motion/StaggerGrid";
 import { ArrowRight, BookOpen, Music2, Landmark } from "lucide-react";
+import MonasteryMap from "@/components/MonasteryMap";
+import { SITE_NAME } from "@/lib/siteConfig";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +57,7 @@ export default async function HomePage() {
               Burmese Theravada Buddhist Monastery
             </span>
             <h1 className="mt-5 font-myanmar text-4xl font-bold leading-[1.15] text-white sm:text-5xl md:text-6xl">
-              NweNyeinHill Monastery
+              {SITE_NAME}
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-relaxed text-ivory/90 sm:text-lg sm:leading-loose">
               A serene sanctuary for Dhamma learning, reflection, and compassionate service. Discover teachings, history, activities, chants, and our digital library.
@@ -151,6 +153,9 @@ export default async function HomePage() {
           </StaggerItem>
         </StaggerGrid>
       </section>
+
+      {/* Location, map and distance */}
+      <MonasteryMap />
     </div>
   );
 }

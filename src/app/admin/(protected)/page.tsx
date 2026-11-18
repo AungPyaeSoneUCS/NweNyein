@@ -2,6 +2,7 @@ import connectToDatabase from "@/lib/mongodb";
 import Post from "@/models/Post";
 import { getDriveFiles, getDriveConfigStatus } from "@/lib/googleDrive";
 import DashboardAnalytics from "@/components/admin/DashboardAnalytics";
+import { SITE_NAME } from "@/lib/siteConfig";
 
 export const dynamic = "force-dynamic";
 
@@ -78,7 +79,7 @@ export default async function AdminDashboardPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900">Admin Overview</h1>
-          <p className="mt-1 text-slate-600">Detailed analytics and management for NweNyeinHill Monastery.</p>
+          <p className="mt-1 text-slate-600 font-myanmar">Detailed analytics and management for {SITE_NAME}.</p>
         </div>
       </div>
       <DashboardAnalytics {...data} />

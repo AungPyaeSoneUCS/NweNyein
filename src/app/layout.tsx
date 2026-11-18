@@ -4,6 +4,7 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
+import { SITE_NAME } from "@/lib/siteConfig";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const notoMyanmar = Noto_Sans_Myanmar({
@@ -15,15 +16,15 @@ const notoMyanmar = Noto_Sans_Myanmar({
 
 export const metadata: Metadata = {
   title: {
-    default: "NweNyeinHill Monastery",
-    template: "%s | NweNyeinHill Monastery",
+    default: SITE_NAME,
+    template: `%s | ${SITE_NAME}`,
   },
   description:
-    "NweNyeinHill Monastery — Dhamma teachings, history, activities, chants, and an e-book library.",
-  applicationName: "NweNyeinHill Monastery",
+    `${SITE_NAME} — Dhamma teachings, history, activities, chants, and an e-book library.`,
+  applicationName: SITE_NAME,
   appleWebApp: {
     capable: true,
-    title: "NweNyeinHill",
+    title: SITE_NAME,
     statusBarStyle: "default",
   },
   formatDetection: { telephone: false },

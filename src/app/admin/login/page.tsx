@@ -3,6 +3,7 @@
 import { FormEvent, Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
+import { SITE_NAME } from "@/lib/siteConfig";
 
 function AdminLoginInner() {
   const [email, setEmail] = useState("");
@@ -42,7 +43,7 @@ function AdminLoginInner() {
         <div className="mb-6 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-saffron text-white text-xl">☸</div>
           <h1 className="text-2xl font-semibold text-maroon">Admin Login</h1>
-          <p className="mt-1 text-sm text-slate-600">NweNyeinHill Monastery</p>
+          <p className="mt-1 text-sm text-slate-600 font-myanmar">{SITE_NAME}</p>
         </div>
         <form onSubmit={onSubmit} className="space-y-4">
           <div>

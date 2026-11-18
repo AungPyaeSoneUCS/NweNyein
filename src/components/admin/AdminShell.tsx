@@ -10,6 +10,7 @@ import {
   LogOut, ExternalLink, Menu, X, PlusCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SITE_NAME } from "@/lib/siteConfig";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -74,7 +75,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <div className="flex h-16 items-center gap-2 border-b border-slate-200/80 px-5">
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-maroon to-maroon-light text-white shadow-sm">☸</span>
           <div className="leading-tight">
-            <p className="text-sm font-semibold text-maroon">NweNyeinHill</p>
+            <p className="max-w-[12rem] truncate text-sm font-semibold text-maroon font-myanmar">{SITE_NAME}</p>
             <p className="text-[11px] uppercase tracking-wide text-slate-500">Admin CMS</p>
           </div>
         </div>

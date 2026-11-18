@@ -1,12 +1,13 @@
 import type { MetadataRoute } from "next";
+import { SITE_NAME } from "@/lib/siteConfig";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "NweNyeinHill Monastery",
-    short_name: "NweNyeinHill",
+    name: SITE_NAME,
+    short_name: SITE_NAME,
     description:
-      "Dhamma teachings, monastery history, activities, chants, and an e-book library from NweNyeinHill Monastery.",
+      `Dhamma teachings, monastery history, activities, chants, and an e-book library from ${SITE_NAME}.`,
     lang: "en",
     dir: "ltr",
     start_url: "/",
@@ -26,8 +27,8 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       {
-        name: "Knowledge",
-        short_name: "Knowledge",
+        name: "Read",
+        short_name: "Read",
         description: "Dhamma teachings and reflections",
         url: "/knowledge",
         icons: [{ src: "/icons/icon-96.png", sizes: "96x96", type: "image/png" }],

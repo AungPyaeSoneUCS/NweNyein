@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Download, Share, X } from "lucide-react";
+import { SITE_NAME } from "@/lib/siteConfig";
 import { INSTALL_EVENT, useInstallPrompt } from "./useInstallPrompt";
 
 const DISMISS_KEY = "nnh-install-dismissed-at";
@@ -78,7 +79,7 @@ export default function InstallPrompt() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold leading-snug text-maroon">
-                  {iosInstructions ? "Add to Home Screen" : "Install NweNyeinHill"}
+                  {iosInstructions ? "Add to Home Screen" : `Install ${SITE_NAME}`}
                 </p>
                 {iosInstructions ? (
                   <p className="mt-1 text-xs leading-relaxed text-slate-600">

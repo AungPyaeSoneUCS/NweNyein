@@ -1,4 +1,4 @@
-/* NweNyeinHill Monastery — service worker
+/* နွယ်ငြိမ်းတောင်ပေါ်ကျောင်းတိုက် — service worker
  *
  * Strategy
  *  - Navigations: network-first, cached page as fallback, then /offline.
@@ -6,7 +6,7 @@
  *  - API, admin routes and the image optimizer are never touched, so admin
  *    data and Drive media always stay fresh.
  */
-const VERSION = "v1";
+const VERSION = "v2";
 const PAGE_CACHE = `nnh-pages-${VERSION}`;
 const ASSET_CACHE = `nnh-assets-${VERSION}`;
 
