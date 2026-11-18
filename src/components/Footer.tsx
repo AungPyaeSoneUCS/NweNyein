@@ -1,13 +1,19 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 
 export default function Footer() {
+  const pathname = usePathname();
   const year = new Date().getFullYear();
   const reduceMotion = useReducedMotion();
 
+  // No footer anywhere on Songs (the player occupies the bottom), and no
+  // footer on any page at mobile widths (the bottom nav is there instead).
+  if (pathname === "/songs" || pathname.startsWith("/songs/")) return null;
+
   return (
-    <footer className="mt-10 px-4 mb-20 md:mb-8">
+    <footer className="mt-10 mb-20 hidden px-4 md:mb-8 md:block">
       <motion.div
         initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 28, scale: 0.97 }}
         whileInView={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}

@@ -55,7 +55,7 @@ export default async function KnowledgeDetailPage({ params }: Props) {
     <article className="container-page py-10 md:py-14">
       <div className="mx-auto max-w-3xl">
         <FadeIn>
-          <span className="inline-flex rounded-full bg-amber-100/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-900">Knowledge & Dhamma Teachings</span>
+          <span className="inline-flex rounded-full bg-amber-100/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-900">Read & Dhamma Teachings</span>
           <h1 className="mt-4 text-3xl md:text-4xl leading-tight font-myanmar">{post.title}</h1>
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600">
             {post.author && <span className="inline-flex items-center gap-1.5"><UserRound size={15} /> {post.author}</span>}

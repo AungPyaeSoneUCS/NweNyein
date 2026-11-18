@@ -3,7 +3,7 @@ import connectToDatabase from "@/lib/mongodb";
 import Post from "@/models/Post";
 import KnowledgeList from "@/components/KnowledgeList";
 
-export const metadata = { title: "Knowledge & Dhamma Teachings" };
+export const metadata = { title: "Read & Dhamma Teachings" };
 export const dynamic = "force-dynamic";
 
 async function getKnowledgePosts() {

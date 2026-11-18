@@ -7,7 +7,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Home,
   BookOpen,
-  Image as ImageIcon,
   Music,
   Library,
   MoreHorizontal,
@@ -21,17 +20,18 @@ import { INSTALL_EVENT, useInstallPrompt } from "./pwa/useInstallPrompt";
 
 const desktopLinks = [
   { href: "/", label: "Home" },
-  { href: "/knowledge", label: "Knowledge" },
+  { href: "/knowledge", label: "Read" },
   { href: "/history", label: "History" },
   { href: "/activities", label: "Activities" },
   { href: "/songs", label: "Songs" },
   { href: "/library", label: "Library" },
 ];
 
+// On mobile, Activities is replaced by History in the fourth tab position.
 const bottomTabs = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/knowledge", label: "Knowledge", icon: BookOpen },
-  { href: "/activities", label: "Activities", icon: ImageIcon },
+  { href: "/knowledge", label: "Read", icon: BookOpen },
+  { href: "/history", label: "History", icon: History },
   { href: "/songs", label: "Songs", icon: Music },
   { href: "/library", label: "Library", icon: Library },
 ];
@@ -180,16 +180,6 @@ export default function Navbar() {
                   </button>
                 </div>
                 <div className="space-y-2">
-                  <Link
-                    href="/history"
-                    className="flex min-h-[52px] items-center gap-3 rounded-2xl border border-amber-900/10 bg-ivory/60 px-4 py-3 text-charcoal hover:bg-amber-50/60"
-                  >
-                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-maroon/10 text-maroon"><History size={20} /></span>
-                    <span>
-                      <span className="block font-medium">History</span>
-                      <span className="block text-xs text-slate-500">Monastery timeline & milestones</span>
-                    </span>
-                  </Link>
                   <Link
                     href="/admin"
                     className="flex min-h-[52px] items-center gap-3 rounded-2xl border border-amber-900/10 bg-ivory/60 px-4 py-3 text-charcoal hover:bg-amber-50/60"
