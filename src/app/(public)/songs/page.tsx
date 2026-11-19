@@ -1,6 +1,7 @@
-import { getDriveFiles } from "@/lib/googleDrive";
+import { getDriveTree } from "@/lib/googleDrive";
 import { getMediaCovers } from "@/lib/mediaMeta";
 import SongsBrowser from "@/components/SongsBrowser";
+import type { DriveTree } from "@/lib/driveTree";
 
 export const metadata = { title: "Dhamma Songs & Chants" };
 // Drive listings are cached inside getDriveFiles(); render dynamically so a
@@ -8,10 +9,10 @@ export const metadata = { title: "Dhamma Songs & Chants" };
 export const dynamic = "force-dynamic";
 
 export default async function SongsPage() {
-  let tracks: any[] = [];
+  let tree: DriveTree | null = null;
   let error: string | null = null;
   try {
-    tracks = await getDriveFiles("songs");
+    tree = await getDriveTree("songs");
   } catch (e) {
     console.error(e);
     error = "Songs are temporarily unavailable. Please try again in a moment.";
@@ -22,10 +23,12 @@ export default async function SongsPage() {
 
   return (
     <div className="container-page py-8 md:py-10">
-      {error ? (
-        <div className="card border-red-200/60 bg-red-50/70 p-6 text-red-700">{error}</div>
+      {error || !tree ? (
+        <div className="card border-red-200/60 bg-red-50/70 p-6 text-red-700">
+          {error || "Songs are temporarily unavailable. Please try again in a moment."}
+        </div>
       ) : (
-        <SongsBrowser tracks={tracks} covers={covers} />
+        <SongsBrowser tree={tree} covers={covers} />
       )}
     </div>
   );

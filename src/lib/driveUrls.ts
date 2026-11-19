@@ -5,6 +5,8 @@ export interface DriveFile {
   size?: string;
   modifiedTime?: string;
   thumbnailLink?: string;
+  /** Direct parent folder IDs from Drive. */
+  parents?: string[];
 }
 
 export function extractDriveId(input: string): string {

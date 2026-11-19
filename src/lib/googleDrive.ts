@@ -3,6 +3,7 @@ import { unstable_cache } from "next/cache";
 import { Readable } from "stream";
 
 import type { DriveFile } from "./driveUrls";
+import { buildDriveTree, DRIVE_FOLDER_MIME, type DriveTree } from "./driveTree";
 
 export type DriveFileType = "photos" | "songs" | "books";
 export type { DriveFile };
@@ -231,7 +232,7 @@ async function listFilesInFolder(folderId: string): Promise<DriveFile[]> {
   do {
     const res = await drive.files.list({
       q: `'${folderId}' in parents and trashed = false`,
-      fields: "nextPageToken, files(id, name, mimeType, size, modifiedTime, thumbnailLink)",
+      fields: "nextPageToken, files(id, name, mimeType, size, modifiedTime, thumbnailLink, parents)",
       orderBy: "name_natural",
       pageSize: 1000,
       pageToken,
@@ -248,6 +249,7 @@ async function listFilesInFolder(folderId: string): Promise<DriveFile[]> {
         size: f.size || undefined,
         modifiedTime: f.modifiedTime || undefined,
         thumbnailLink: f.thumbnailLink || undefined,
+        parents: f.parents || undefined,
       }));
 
     files.push(...batch);
@@ -262,6 +264,69 @@ export async function getDriveFiles(type: DriveFileType): Promise<DriveFile[]> {
   const cachedFetch = unstable_cache(
     async () => listFilesInFolder(folderId),
     ["drive-files", type, folderId],
+    {
+      revalidate: 3600,
+      tags: ["drive-media", `drive-${type}`],
+    }
+  );
+  return cachedFetch();
+}
+
+/**
+ * Lists a folder and every descendant folder, keeping the direct parent IDs so
+ * the caller can rebuild the parent-to-child collection tree.
+ */
+async function listDriveTree(rootFolderId: string): Promise<DriveFile[]> {
+  const drive = await getDriveClient();
+  const queue = [rootFolderId];
+  const visitedFolders = new Set<string>();
+  const entries: DriveFile[] = [];
+
+  while (queue.length) {
+    const folderId = queue.shift()!;
+    if (!folderId || visitedFolders.has(folderId)) continue;
+    visitedFolders.add(folderId);
+
+    let pageToken: string | undefined;
+    do {
+      const res = await drive.files.list({
+        q: `'${folderId}' in parents and trashed = false`,
+        fields:
+          "nextPageToken, files(id, name, mimeType, size, modifiedTime, thumbnailLink, parents)",
+        orderBy: "folder,name_natural",
+        pageSize: 1000,
+        pageToken,
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true,
+      });
+
+      for (const file of res.data.files || []) {
+        if (!file.id || !file.name) continue;
+        const entry: DriveFile = {
+          id: file.id,
+          name: file.name,
+          mimeType: file.mimeType || "application/octet-stream",
+          size: file.size || undefined,
+          modifiedTime: file.modifiedTime || undefined,
+          thumbnailLink: file.thumbnailLink || undefined,
+          parents: file.parents || undefined,
+        };
+        entries.push(entry);
+        if (entry.mimeType === DRIVE_FOLDER_MIME) queue.push(entry.id);
+      }
+      pageToken = res.data.nextPageToken || undefined;
+    } while (pageToken);
+  }
+
+  return entries;
+}
+
+/** Recursive folder tree for books, songs, or any other Drive-backed collection. */
+export async function getDriveTree(type: DriveFileType): Promise<DriveTree> {
+  const folderId = getFolderId(type);
+  const cachedFetch = unstable_cache(
+    async () => buildDriveTree(folderId, await listDriveTree(folderId)),
+    ["drive-tree", type, folderId],
     {
       revalidate: 3600,
       tags: ["drive-media", `drive-${type}`],
@@ -384,6 +449,36 @@ export interface DriveAudioStream {
  * so playback goes through /api/audio/[fileId] instead. Forwarding the Range
  * header keeps seeking and partial buffering working.
  */
+/** True when a file is in the folder or any nested singer/album subfolder. */
+async function isInsideDriveFolder(
+  drive: Awaited<ReturnType<typeof getDriveClient>>,
+  directParents: string[],
+  rootFolderId: string
+): Promise<boolean> {
+  const queue = [...directParents];
+  const seen = new Set<string>();
+
+  while (queue.length) {
+    const folderId = queue.shift()!;
+    if (!folderId || seen.has(folderId)) continue;
+    if (folderId === rootFolderId) return true;
+    seen.add(folderId);
+
+    try {
+      const folder = await drive.files.get({
+        fileId: folderId,
+        fields: "id, parents",
+        supportsAllDrives: true,
+      });
+      queue.push(...(folder.data.parents || []));
+    } catch {
+      // Keep walking the other ancestors if one folder cannot be read.
+    }
+  }
+
+  return false;
+}
+
 export async function openDriveAudioStream(
   fileId: string,
   rangeHeader?: string | null
@@ -398,7 +493,7 @@ export async function openDriveAudioStream(
 
   const songsFolderId = getFolderIdSafe("songs");
   const parents = meta.data.parents || [];
-  if (!songsFolderId || !parents.includes(songsFolderId)) {
+  if (!songsFolderId || !(await isInsideDriveFolder(drive, parents, songsFolderId))) {
     const error = new Error("This file is not in the Songs folder.") as Error & { status?: number };
     error.status = 403;
     throw error;
