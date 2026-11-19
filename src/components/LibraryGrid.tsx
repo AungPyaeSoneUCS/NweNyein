@@ -10,9 +10,7 @@ import {
   Download,
   FileText,
   Folder,
-  FolderOpen,
   Home,
-  LibraryBig,
 } from "lucide-react";
 import {
   formatFileSize,
@@ -53,8 +51,6 @@ function CollectionCard({
         </span>
         <span className="mt-1.5 block text-xs text-slate-500">
           {collection.fileCount} {collection.fileCount === 1 ? "document" : "documents"}
-          {collection.collectionCount > 0 &&
-            ` · ${collection.collectionCount} sub-collection${collection.collectionCount === 1 ? "" : "s"}`}
         </span>
       </span>
       <ChevronRight size={17} className="mt-1 flex-none text-slate-400" />
@@ -151,7 +147,7 @@ export default function LibraryGrid({
   const hasAnyContent = tree.collections.length > 0 || tree.allFiles.length > 0;
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-5">
       {hasAnyContent && (
         <SearchBar
           value={query}
@@ -187,9 +183,11 @@ export default function LibraryGrid({
               <button
                 type="button"
                 onClick={() => setActiveFolderId(null)}
+                aria-label="Back to all folders"
                 className="inline-flex min-h-[36px] items-center gap-1.5 rounded-xl px-2 text-saffron-dark hover:bg-amber-50"
               >
-                <Home size={15} /> All collections
+                <Home size={15} />
+                <span className="sr-only">Back to all folders</span>
               </button>
               {ancestors.map((folder, index) => (
                 <span key={folder.id} className="flex items-center gap-1.5">
@@ -208,25 +206,8 @@ export default function LibraryGrid({
             </nav>
           )}
 
-          <section>
-            <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-              <div>
-                <h2 className="flex items-center gap-2 text-xl font-semibold text-maroon md:text-2xl">
-                  {activeFolderId ? <FolderOpen size={20} /> : <LibraryBig size={20} />}
-                  {activeFolderId ? "Sub-collections" : "Collections"}
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  {activeFolderId
-                    ? "Open a sub-collection to see the documents inside it."
-                    : "Choose a collection to browse its books and documents."}
-                </p>
-              </div>
-              <span className="text-sm text-slate-500">
-                {visibleFolders.length} {visibleFolders.length === 1 ? "collection" : "collections"}
-              </span>
-            </div>
-
-            {visibleFolders.length > 0 ? (
+          {visibleFolders.length > 0 && (
+            <section aria-label="Folders">
               <StaggerGrid className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
                 {visibleFolders.map((folder) => (
                   <StaggerItem key={folder.id}>
@@ -240,33 +221,26 @@ export default function LibraryGrid({
                   </StaggerItem>
                 ))}
               </StaggerGrid>
-            ) : (
-              <div className="card p-5 text-sm text-slate-600">
-                No sub-collections here. Documents are listed below.
-              </div>
-            )}
-          </section>
+            </section>
+          )}
 
-          {(visibleFiles.length > 0 || (activeCollection && activeCollection.folders.length === 0)) && (
-            <section>
-              <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-                <h2 className="text-xl font-semibold text-maroon md:text-2xl">
-                  {activeCollection ? `Documents in ${activeCollection.name}` : "General documents"}
-                </h2>
-                <span className="text-sm text-slate-500">
+          {visibleFiles.length > 0 && (
+            <section aria-label="Documents">
+              <div className="mb-3 flex items-center justify-end">
+                <span className="rounded-full border border-amber-200/70 bg-amber-50/60 px-3 py-1 text-xs font-medium text-saffron-dark">
                   {visibleFiles.length} {visibleFiles.length === 1 ? "document" : "documents"}
                 </span>
               </div>
-              {visibleFiles.length > 0 ? (
-                <StaggerGrid className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-6">
-                  {visibleFiles.map((file) => renderFile(file))}
-                </StaggerGrid>
-              ) : (
-                <div className="card p-8 text-center text-slate-600">
-                  No documents in this collection yet.
-                </div>
-              )}
+              <StaggerGrid className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-6">
+                {visibleFiles.map((file) => renderFile(file))}
+              </StaggerGrid>
             </section>
+          )}
+
+          {activeCollection && visibleFolders.length === 0 && visibleFiles.length === 0 && (
+            <div className="card p-8 text-center text-sm text-slate-600">
+              No documents yet.
+            </div>
           )}
         </>
       )}
