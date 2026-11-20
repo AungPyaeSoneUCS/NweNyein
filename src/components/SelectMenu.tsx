@@ -25,7 +25,9 @@ export default function SelectMenu({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [openUp, setOpenUp] = useState(true);
   const wrapRef = useRef<HTMLDivElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
   const selected = options.find((option) => option.value === value);
 
   useEffect(() => {
@@ -44,11 +46,23 @@ export default function SelectMenu({
     };
   }, [open]);
 
+  const toggle = () => {
+    if (!open && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const estimated = Math.min(options.length * 44 + 12, 240);
+      setOpenUp(
+        rect.top > estimated && rect.top > window.innerHeight - rect.bottom
+      );
+    }
+    setOpen((current) => !current);
+  };
+
   return (
     <div ref={wrapRef} className={`relative ${className}`}>
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen((current) => !current)}
+        onClick={toggle}
         aria-label={`${label}: ${selected?.label || "Off"}`}
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -73,7 +87,9 @@ export default function SelectMenu({
         <div
           role="listbox"
           aria-label={label}
-          className="absolute bottom-full left-0 z-[60] mb-2 w-full min-w-[11rem] overflow-hidden rounded-2xl border border-white/15 bg-maroon/95 p-1.5 shadow-2xl backdrop-blur-xl"
+          className={`absolute left-0 z-[60] w-full min-w-[11rem] overflow-hidden rounded-2xl border border-white/15 bg-maroon/95 p-1.5 shadow-2xl backdrop-blur-xl ${
+            openUp ? "bottom-full mb-2" : "top-full mt-2"
+          }`}
         >
           <div className="max-h-56 overflow-y-auto">
             {options.map((option) => {
