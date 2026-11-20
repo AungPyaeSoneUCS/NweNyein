@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import connectToDatabase from "@/lib/mongodb";
 import Post from "@/models/Post";
 import PostForm from "@/components/admin/PostForm";
+import { isPostCategory, POST_CATEGORIES } from "@/lib/postCategories";
 
 interface Props { params: { id: string } }
 
@@ -14,7 +15,7 @@ export default async function EditPostPage({ params }: Props) {
     _id: post._id.toString(),
     title: post.title,
     slug: post.slug,
-    category: post.category,
+    category: isPostCategory(post.category) ? post.category : POST_CATEGORIES[0],
     content: post.content,
     author: post.author || "",
     coverImageDriveId: post.coverImageDriveId || "",

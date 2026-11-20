@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions, isAdminSession } from "@/lib/auth";
 import connectToDatabase from "@/lib/mongodb";
+import { createPostCategoryCounts, isPostCategory, POST_CATEGORIES } from "@/lib/postCategories";
 import Post from "@/models/Post";
 import { getDriveFiles, getDriveConfigStatus } from "@/lib/googleDrive";
 
@@ -20,6 +21,7 @@ export async function GET() {
 
     const [postAgg, latestByCategory, posts] = await Promise.all([
       Post.aggregate([
+        { $match: { category: { $in: [...POST_CATEGORIES] } } },
         {
           $group: {
             _id: { category: "$category", published: "$published" },
@@ -29,17 +31,17 @@ export async function GET() {
         },
       ]),
       Post.aggregate([
+        { $match: { category: { $in: [...POST_CATEGORIES] } } },
         { $sort: { updatedAt: -1 } },
         { $group: { _id: "$category", latest: { $first: "$updatedAt" }, count: { $sum: 1 } } },
       ]),
-      Post.find({}).sort({ updatedAt: -1 }).limit(10).lean(),
+      Post.find({ category: { $in: [...POST_CATEGORIES] } })
+        .sort({ updatedAt: -1 })
+        .limit(10)
+        .lean(),
     ]);
 
-    const byCat = {
-      knowledge: { total: 0, published: 0, draft: 0, latest: null as string | null },
-      history: { total: 0, published: 0, draft: 0, latest: null as string | null },
-      activity: { total: 0, published: 0, draft: 0, latest: null as string | null },
-    };
+    const byCat = createPostCategoryCounts();
 
     for (const row of postAgg as any[]) {
       const cat = row._id.category as keyof typeof byCat;
@@ -76,14 +78,16 @@ export async function GET() {
       books: { count: books.length, bytes: sumBytes(books), pdf: booksPdf, docx: booksDocx },
     };
 
-    const recentPosts = (posts as any[]).map((p) => ({
-      id: p._id.toString(),
-      kind: "post",
-      title: p.title,
-      type: p.category,
-      status: p.published ? "Published" : "Draft",
-      date: (p.updatedAt || p.createdAt).toISOString(),
-    }));
+    const recentPosts = (posts as any[])
+      .filter((p) => isPostCategory(p.category))
+      .map((p) => ({
+        id: p._id.toString(),
+        kind: "post",
+        title: p.title,
+        type: p.category,
+        status: p.published ? "Published" : "Draft",
+        date: (p.updatedAt || p.createdAt).toISOString(),
+      }));
 
     return NextResponse.json({ mongo: byCat, drive, recentPosts });
   } catch (error) {

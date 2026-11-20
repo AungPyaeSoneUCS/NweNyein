@@ -17,10 +17,10 @@ export const dynamic = "force-dynamic";
 
 async function getHomeData() {
   await connectToDatabase();
-  const [knowledge, activities] = await Promise.all([
-    Post.find({ category: "knowledge", published: true }).sort({ createdAt: -1 }).limit(3).lean(),
-    Post.find({ category: "activity", published: true }).sort({ createdAt: -1 }).limit(3).lean(),
-  ]);
+  const knowledge = await Post.find({ category: "knowledge", published: true })
+    .sort({ createdAt: -1 })
+    .limit(3)
+    .lean();
 
   let songsCount = 0;
   let booksCount = 0;
@@ -37,14 +37,13 @@ async function getHomeData() {
 
   return {
     knowledge: JSON.parse(JSON.stringify(knowledge)),
-    activities: JSON.parse(JSON.stringify(activities)),
     songsCount,
     booksCount,
   };
 }
 
 export default async function HomePage() {
-  const { knowledge, activities, songsCount, booksCount } = await getHomeData();
+  const { knowledge, songsCount, booksCount } = await getHomeData();
 
   return (
     <div className="pb-4">
@@ -98,30 +97,6 @@ export default async function HomePage() {
         ) : (
           <div className="card p-8 text-slate-600">No teachings published yet.</div>
         )}
-      </section>
-
-      {/* Recent Activities */}
-      <section className="border-y border-amber-900/10 bg-white/40">
-        <div className="container-page py-14 md:py-16">
-          <FadeIn className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="text-2xl md:text-3xl">Recent Activities</h2>
-              <p className="mt-1 text-slate-600 leading-relaxed">Community events, ceremonies, and monastery photo reports.</p>
-            </div>
-            <Link href="/activities" className="inline-flex min-h-[44px] items-center text-sm font-semibold text-saffron-dark hover:text-maroon">
-              View all <ArrowRight size={15} className="ml-1" />
-            </Link>
-          </FadeIn>
-          {activities.length > 0 ? (
-            <StaggerGrid className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 sm:gap-6">
-              {activities.map((p: any) => (
-                <StaggerItem key={p._id}><PostCard {...p} /></StaggerItem>
-              ))}
-            </StaggerGrid>
-          ) : (
-            <div className="card p-8 text-slate-600">No activities published yet.</div>
-          )}
-        </div>
       </section>
 
       {/* Quick Access */}

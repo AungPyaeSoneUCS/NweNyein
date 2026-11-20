@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: SITE_NAME,
     short_name: SITE_NAME,
     description:
-      `Dhamma teachings, monastery history, activities, chants, and an e-book library from ${SITE_NAME}.`,
+      `Dhamma teachings, monastery history, chants, and an e-book library from ${SITE_NAME}.`,
     lang: "en",
     dir: "ltr",
     start_url: "/",

@@ -6,11 +6,12 @@ import { motion } from "framer-motion";
 import { CalendarDays, UserRound } from "lucide-react";
 import { formatDate, truncate } from "@/lib/utils";
 import { getPhotoUrl } from "@/lib/driveUrls";
+import type { PostCategory } from "@/lib/postCategories";
 
 interface PostCardProps {
   title: string;
   slug: string;
-  category: "knowledge" | "history" | "activity";
+  category: PostCategory;
   content: string;
   author?: string;
   coverImageDriveId?: string;
@@ -20,11 +21,11 @@ interface PostCardProps {
 const categoryStyles: Record<string, string> = {
   knowledge: "bg-amber-100/80 text-amber-900",
   history: "bg-maroon/10 text-maroon",
-  activity: "bg-orange-100/80 text-orange-900",
 };
 
 export default function PostCard({ title, slug, category, content, author, coverImageDriveId, createdAt }: PostCardProps) {
-  const href = category === "knowledge" ? `/knowledge/${slug}` : category === "activity" ? `/activities/${slug}` : "/history";
+  const href = category === "knowledge" ? `/knowledge/${slug}` : "/history";
+  const categoryStyle = categoryStyles[category];
   return (
     <motion.article
       whileHover={{ y: -4 }}
@@ -48,9 +49,11 @@ export default function PostCard({ title, slug, category, content, author, cover
       )}
       <div className="flex flex-1 flex-col p-5 sm:p-6">
         <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
-          <span className={`rounded-full px-2.5 py-1 font-medium capitalize ${categoryStyles[category] || "bg-slate-100 text-slate-700"}`}>
-            {category}
-          </span>
+          {categoryStyle && (
+            <span className={`rounded-full px-2.5 py-1 font-medium capitalize ${categoryStyle}`}>
+              {category}
+            </span>
+          )}
           <span className="inline-flex items-center gap-1 text-slate-500">
             <CalendarDays size={13} />
             <time dateTime={new Date(createdAt).toISOString()}>{formatDate(createdAt)}</time>

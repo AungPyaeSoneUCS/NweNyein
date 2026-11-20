@@ -1,6 +1,7 @@
 import mongoose, { Schema, type Document, type Model } from "mongoose";
+import { POST_CATEGORIES, type PostCategory } from "@/lib/postCategories";
 
-export type PostCategory = "knowledge" | "history" | "activity";
+export type { PostCategory } from "@/lib/postCategories";
 
 export interface IPost extends Document {
   title: string;
@@ -22,7 +23,7 @@ const PostSchema = new Schema<IPost>(
     category: {
       type: String,
       required: true,
-      enum: ["knowledge", "history", "activity"],
+      enum: [...POST_CATEGORIES],
       index: true,
     },
     content: { type: String, required: true },

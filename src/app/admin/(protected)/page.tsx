@@ -1,6 +1,7 @@
 import connectToDatabase from "@/lib/mongodb";
 import Post from "@/models/Post";
 import { getDriveFiles, getDriveConfigStatus } from "@/lib/googleDrive";
+import { createPostCategoryCounts, isPostCategory, POST_CATEGORIES } from "@/lib/postCategories";
 import DashboardAnalytics from "@/components/admin/DashboardAnalytics";
 import { SITE_NAME } from "@/lib/siteConfig";
 
@@ -14,16 +15,22 @@ async function getDashboardData() {
   await connectToDatabase();
 
   const [postAgg, latestByCategory, recentPosts] = await Promise.all([
-    Post.aggregate([{ $group: { _id: { category: "$category", published: "$published" }, count: { $sum: 1 } } }]),
-    Post.aggregate([{ $sort: { updatedAt: -1 } }, { $group: { _id: "$category", latest: { $first: "$updatedAt" } } }]),
-    Post.find({}).sort({ updatedAt: -1 }).limit(10).lean(),
+    Post.aggregate([
+      { $match: { category: { $in: [...POST_CATEGORIES] } } },
+      { $group: { _id: { category: "$category", published: "$published" }, count: { $sum: 1 } } },
+    ]),
+    Post.aggregate([
+      { $match: { category: { $in: [...POST_CATEGORIES] } } },
+      { $sort: { updatedAt: -1 } },
+      { $group: { _id: "$category", latest: { $first: "$updatedAt" } } },
+    ]),
+    Post.find({ category: { $in: [...POST_CATEGORIES] } })
+      .sort({ updatedAt: -1 })
+      .limit(10)
+      .lean(),
   ]);
 
-  const byCat = {
-    knowledge: { total: 0, published: 0, draft: 0, latest: null as string | null },
-    history: { total: 0, published: 0, draft: 0, latest: null as string | null },
-    activity: { total: 0, published: 0, draft: 0, latest: null as string | null },
-  };
+  const byCat = createPostCategoryCounts();
 
   for (const row of postAgg as any[]) {
     const cat = row._id.category as keyof typeof byCat;
@@ -61,14 +68,16 @@ async function getDashboardData() {
       songs: { count: songs.length, bytes: sumBytes(songs) },
       books: { count: books.length, bytes: sumBytes(books), pdf: booksPdf, docx: booksDocx },
     },
-    recentPosts: (recentPosts as any[]).map((p) => ({
-      id: p._id.toString(),
-      kind: "post",
-      title: p.title,
-      type: p.category,
-      status: p.published ? "Published" : "Draft",
-      date: (p.updatedAt || p.createdAt).toISOString(),
-    })),
+    recentPosts: (recentPosts as any[])
+      .filter((p) => isPostCategory(p.category))
+      .map((p) => ({
+        id: p._id.toString(),
+        kind: "post",
+        title: p.title,
+        type: p.category,
+        status: p.published ? "Published" : "Draft",
+        date: (p.updatedAt || p.createdAt).toISOString(),
+      })),
   };
 }
 

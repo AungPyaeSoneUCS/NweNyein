@@ -24,7 +24,7 @@ export default function PhotoGallery({ photos }: { photos: DriveFile[] }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [index, close, prev, next]);
 
-  if (!photos.length) return <div className="card p-6 text-slate-600">No photos available for this activity.</div>;
+  if (!photos.length) return <div className="card p-6 text-slate-600">No photos available for this gallery.</div>;
 
   return (
     <>

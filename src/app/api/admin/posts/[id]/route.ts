@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions, isAdminSession } from "@/lib/auth";
 import connectToDatabase from "@/lib/mongodb";
+import { isPostCategory } from "@/lib/postCategories";
 import Post from "@/models/Post";
 import { slugify } from "@/lib/utils";
 
@@ -33,6 +34,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     if (!title || !category || !content) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+    if (!isPostCategory(category)) {
+      return NextResponse.json({ error: "Invalid category" }, { status: 400 });
     }
 
     await connectToDatabase();

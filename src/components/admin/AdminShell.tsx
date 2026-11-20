@@ -6,7 +6,7 @@ import { signOut } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  LayoutDashboard, BookOpen, History, Image as ImageIcon, Music, Library,
+  LayoutDashboard, BookOpen, History, Music, Library,
   LogOut, ExternalLink, Menu, X, PlusCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,7 +16,6 @@ const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/knowledge", label: "Knowledge", icon: BookOpen },
   { href: "/admin/history", label: "History", icon: History },
-  { href: "/admin/activities", label: "Activities", icon: ImageIcon },
   { href: "/admin/songs", label: "Songs", icon: Music },
   { href: "/admin/library", label: "Library", icon: Library },
 ];

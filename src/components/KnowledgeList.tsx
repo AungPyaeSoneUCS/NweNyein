@@ -4,12 +4,13 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import PostCard from "./PostCard";
 import SearchBar from "./SearchBar";
+import type { PostCategory } from "@/lib/postCategories";
 
 interface PostItem {
   _id: string;
   title: string;
   slug: string;
-  category: "knowledge" | "history" | "activity";
+  category: PostCategory;
   content: string;
   author?: string;
   coverImageDriveId?: string;

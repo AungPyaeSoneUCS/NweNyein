@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions, isAdminSession } from "@/lib/auth";
 import connectToDatabase from "@/lib/mongodb";
+import { isPostCategory, POST_CATEGORIES } from "@/lib/postCategories";
 import Post from "@/models/Post";
 import { slugify } from "@/lib/utils";
 
@@ -12,7 +13,9 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     await connectToDatabase();
-    const posts = await Post.find({}).sort({ createdAt: -1 }).lean();
+    const posts = await Post.find({ category: { $in: [...POST_CATEGORIES] } })
+      .sort({ createdAt: -1 })
+      .lean();
     return NextResponse.json({ posts });
   } catch (error) {
     console.error("GET /api/admin/posts error", error);
@@ -33,7 +36,7 @@ export async function POST(req: NextRequest) {
     if (!title || !category || !content) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
-    if (!["knowledge", "history", "activity"].includes(category)) {
+    if (!isPostCategory(category)) {
       return NextResponse.json({ error: "Invalid category" }, { status: 400 });
     }
 

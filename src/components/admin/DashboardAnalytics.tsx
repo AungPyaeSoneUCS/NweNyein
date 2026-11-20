@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { RefreshCw, Database, HardDrive, Copy, Check, FileText, Image as ImageIcon, Music, BookOpen, History, Activity, ShieldCheck, X } from "lucide-react";
+import { RefreshCw, Database, HardDrive, Copy, Check, FileText, Image as ImageIcon, Music, BookOpen, History, ShieldCheck, X } from "lucide-react";
+import { isPostCategory, type PostCategoryCounts } from "@/lib/postCategories";
 
 function fmtBytes(bytes: number) {
   if (!bytes) return "0 MB";
@@ -18,11 +19,7 @@ function maskId(id?: string) {
 }
 
 type Props = {
-  mongo: {
-    knowledge: { total: number; published: number; draft: number; latest: string | null };
-    history: { total: number; published: number; draft: number; latest: string | null };
-    activity: { total: number; published: number; draft: number; latest: string | null };
-  };
+  mongo: PostCategoryCounts;
   drive: {
     configured: {
       authMode?: string;
@@ -57,6 +54,11 @@ export default function DashboardAnalytics({ mongo, drive, recentPosts }: Props)
   const [toast, setToast] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
+  const visiblePosts = useMemo(
+    () => recentPosts.filter((item) => isPostCategory(item.type)),
+    [recentPosts]
+  );
+
   const cards = useMemo(() => [
     {
       title: "Knowledge Posts",
@@ -71,13 +73,6 @@ export default function DashboardAnalytics({ mongo, drive, recentPosts }: Props)
       value: mongo.history.total,
       lines: [`Timeline milestones: ${mongo.history.published}`, `Last updated: ${mongo.history.latest ? new Date(mongo.history.latest).toLocaleString() : "—"}`],
       accent: "text-maroon bg-maroon/10",
-    },
-    {
-      title: "Activities & Events",
-      icon: Activity,
-      value: mongo.activity.total,
-      lines: [`Published: ${mongo.activity.published} · Draft: ${mongo.activity.draft}`, `Photo albums linked: ${mongo.activity.total}`],
-      accent: "text-orange-700 bg-orange-100",
     },
     {
       title: "Dhamma Songs",
@@ -246,10 +241,10 @@ export default function DashboardAnalytics({ mongo, drive, recentPosts }: Props)
         </div>
       </div>
 
-      {/* Recent activity */}
+      {/* Recent content */}
       <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Recent Activity & Content</h2>
-        <p className="mt-1 text-sm text-slate-600">Latest MongoDB posts and synced content overview.</p>
+        <h2 className="text-lg font-semibold text-slate-900">Recent Content</h2>
+        <p className="mt-1 text-sm text-slate-600">Latest posts and synced content overview.</p>
 
         {/* Desktop table */}
         <div className="mt-4 hidden overflow-x-auto md:block">
@@ -264,9 +259,9 @@ export default function DashboardAnalytics({ mongo, drive, recentPosts }: Props)
               </tr>
             </thead>
             <tbody>
-              {recentPosts.length === 0 ? (
-                <tr><td colSpan={5} className="px-3 py-8 text-center text-slate-500">No recent activity.</td></tr>
-              ) : recentPosts.map((item) => (
+              {visiblePosts.length === 0 ? (
+                <tr><td colSpan={5} className="px-3 py-8 text-center text-slate-500">No recent posts.</td></tr>
+              ) : visiblePosts.map((item) => (
                 <tr key={item.id} className="border-b border-slate-100">
                   <td className="px-3 py-3 font-medium text-slate-800 max-w-md truncate">{item.title}</td>
                   <td className="px-3 py-3"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium capitalize text-slate-700">{item.type}</span></td>
@@ -281,7 +276,7 @@ export default function DashboardAnalytics({ mongo, drive, recentPosts }: Props)
 
         {/* Mobile cards */}
         <div className="mt-4 space-y-3 md:hidden">
-          {recentPosts.length === 0 ? <p className="text-sm text-slate-500">No recent activity.</p> : recentPosts.map((item) => (
+          {visiblePosts.length === 0 ? <p className="text-sm text-slate-500">No recent posts.</p> : visiblePosts.map((item) => (
             <div key={item.id} className="rounded-xl border border-slate-200 p-4">
               <div className="flex items-start justify-between gap-3">
                 <p className="font-medium text-slate-800 leading-snug">{item.title}</p>

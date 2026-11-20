@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description:
-    `${SITE_NAME} — Dhamma teachings, history, activities, chants, and an e-book library.`,
+    `${SITE_NAME} — Dhamma teachings, history, chants, and an e-book library.`,
   applicationName: SITE_NAME,
   appleWebApp: {
     capable: true,

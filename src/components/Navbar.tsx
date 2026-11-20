@@ -23,12 +23,10 @@ const desktopLinks = [
   { href: "/", label: "Home" },
   { href: "/knowledge", label: "Read" },
   { href: "/history", label: "History" },
-  { href: "/activities", label: "Activities" },
   { href: "/songs", label: "Songs" },
   { href: "/library", label: "Library" },
 ];
 
-// On mobile, Activities is replaced by History in the fourth tab position.
 const bottomTabs = [
   { href: "/", label: "Home", icon: Home },
   { href: "/knowledge", label: "Read", icon: BookOpen },

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/mongodb";
+import { isPostCategory, POST_CATEGORIES } from "@/lib/postCategories";
 import Post from "@/models/Post";
 
 export async function GET(req: NextRequest) {
@@ -10,8 +11,11 @@ export async function GET(req: NextRequest) {
     const limitParam = searchParams.get("limit");
     const limit = limitParam ? Math.min(parseInt(limitParam, 10) || 20, 100) : 100;
 
-    const query: Record<string, unknown> = { published: true };
-    if (category && ["knowledge", "history", "activity"].includes(category)) {
+    const query: Record<string, unknown> = {
+      published: true,
+      category: { $in: [...POST_CATEGORIES] },
+    };
+    if (category && isPostCategory(category)) {
       query.category = category;
     }
 

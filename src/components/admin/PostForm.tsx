@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { slugify } from "@/lib/utils";
 import { extractDriveId } from "@/lib/driveUrls";
+import { isPostCategory, POST_CATEGORIES, type PostCategory } from "@/lib/postCategories";
 import DriveCoverField from "./DriveCoverField";
 
 const RichTextEditor = dynamic(() => import("./RichTextEditor"), { ssr: false });
@@ -13,7 +14,7 @@ export interface PostFormValues {
   _id?: string;
   title: string;
   slug: string;
-  category: "knowledge" | "history" | "activity";
+  category: PostCategory;
   content: string;
   author?: string;
   coverImageDriveId?: string;
@@ -27,7 +28,7 @@ export default function PostForm({ initial }: { initial?: Partial<PostFormValues
   const [values, setValues] = useState<PostFormValues>({
     title: initial?.title || "",
     slug: initial?.slug || "",
-    category: (initial?.category as any) || "knowledge",
+    category: isPostCategory(initial?.category) ? initial.category : POST_CATEGORIES[0],
     content: initial?.content || "",
     author: initial?.author || "",
     coverImageDriveId: initial?.coverImageDriveId || "",
@@ -95,10 +96,10 @@ export default function PostForm({ initial }: { initial?: Partial<PostFormValues
         </div>
         <div>
           <label className="label">Category</label>
-          <select className="input" value={values.category} onChange={(e) => setValues({ ...values, category: e.target.value as any })}>
-            <option value="knowledge">knowledge</option>
-            <option value="history">history</option>
-            <option value="activity">activity</option>
+          <select className="input" value={values.category} onChange={(e) => setValues({ ...values, category: e.target.value as PostCategory })}>
+            {POST_CATEGORIES.map((category) => (
+              <option key={category} value={category}>{category}</option>
+            ))}
           </select>
         </div>
         <div>
@@ -123,9 +124,9 @@ export default function PostForm({ initial }: { initial?: Partial<PostFormValues
           onChange={(id) => setValues((v) => ({ ...v, coverImageDriveId: id }))}
         />
         <div>
-          <label className="label">Google Drive Album Folder ID (Activities)</label>
-          <input className="input" value={values.driveAlbumFolderId} onChange={(e) => setValues({ ...values, driveAlbumFolderId: e.target.value })} placeholder="Optional, for activity photo galleries" />
-          <p className="mt-1 text-xs text-slate-500">Used by Activity pages to load a responsive photo gallery.</p>
+          <label className="label">Google Drive Album Folder ID</label>
+          <input className="input" value={values.driveAlbumFolderId} onChange={(e) => setValues({ ...values, driveAlbumFolderId: e.target.value })} placeholder="Optional, for linked photo galleries" />
+          <p className="mt-1 text-xs text-slate-500">Optional Drive folder used for attached photos.</p>
         </div>
       </div>
 
